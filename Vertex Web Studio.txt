@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Relay CRM</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --bg:#0b1014; --bg2:#0f151b; --card:#131b23; --card2:#0f1620;
+    --border:#1f2a36; --text:#e6edf3; --muted:#8a97a6;
+    --primary:#10d893; --primary-glow:#3ce8b0; --primary-fg:#06140e;
+    --danger:#ef4444; --secondary:#1a242e;
+    --shadow-card:0 4px 24px -8px rgba(0,0,0,.5);
+    --shadow-glow:0 10px 40px -10px rgba(16,216,147,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(ellipse at top,#141c26,#0b1014) fixed;
+    color:var(--text); min-height:100vh; line-height:1.5;
+  }
+  .container{max-width:1200px;margin:0 auto;padding:0 24px}
+  header{border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
+  .header-inner{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#1bd4d4);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-glow);font-size:20px}
+  .brand h1{font-size:18px;font-weight:600}
+  .brand p{font-size:12px;color:var(--muted)}
+  main{padding:32px 0;display:flex;flex-direction:column;gap:32px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .stat{background:linear-gradient(160deg,#161f29,#0f1620);border:1px solid var(--border);border-radius:16px;padding:24px;display:flex;justify-content:space-between;align-items:flex-start;box-shadow:var(--shadow-card);transition:.3s}
+  .stat:hover{border-color:rgba(16,216,147,.4);box-shadow:var(--shadow-glow)}
+  .stat .label{font-size:14px;color:var(--muted);font-weight:500}
+  .stat .value{font-size:30px;font-weight:600;margin-top:8px}
+  .stat .icon{width:44px;height:44px;border-radius:12px;background:var(--secondary);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px}
+  .stat.accent .icon{background:linear-gradient(135deg,var(--primary),#1bd4d4);color:var(--primary-fg);box-shadow:var(--shadow-glow)}
+  .toolbar{display:flex;gap:12px;flex-wrap:wrap}
+  .search{flex:1;min-width:240px;position:relative}
+  .search input{width:100%;height:48px;padding:0 16px 0 44px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;outline:none;transition:.2s}
+  .search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(16,216,147,.15)}
+  .search::before{content:"🔍";position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.5;font-size:14px}
+  .btn{height:48px;padding:0 20px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+  .btn:hover{background:var(--secondary)}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-glow));color:var(--primary-fg);border:none;box-shadow:var(--shadow-glow);font-weight:600}
+  .btn-primary:hover{filter:brightness(1.1)}
+  .btn-ghost{background:transparent;border:none}
+  .btn-danger{color:var(--danger)}
+  .btn-sm{height:36px;padding:0 12px;font-size:13px}
+  .btn-icon{width:36px;height:36px;padding:0;justify-content:center}
+  .panel{background:linear-gradient(160deg,#161f29,#0f1620);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-card);overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead{background:rgba(26,36,46,.5)}
+  th{padding:16px 20px;text-align:left;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+  td{padding:16px 20px;border-bottom:1px solid rgba(31,42,54,.6);color:var(--muted)}
+  tbody tr:hover{background:rgba(26,36,46,.3)}
+  tbody tr:last-child td{border-bottom:0}
+  td.name{color:var(--text);font-weight:500}
+  td.amount{font-family:ui-monospace,monospace;color:var(--primary);font-weight:500;text-align:right}
+  .actions{display:flex;justify-content:flex-end;gap:4px}
+  .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#1bd4d4);color:var(--primary-fg);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:12px;vertical-align:middle}
+  .empty{padding:60px 24px;text-align:center;border:2px dashed var(--border);border-radius:16px;background:rgba(19,27,35,.5)}
+  .empty h3{font-size:18px;margin-top:12px}
+  .empty p{color:var(--muted);font-size:14px;margin-top:4px}
+  .form{padding:32px}
+  .form-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+  .form-header h2{font-size:24px;font-weight:600}
+  .form-header p{font-size:14px;color:var(--muted);margin-top:4px}
+  .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+  .field{display:flex;flex-direction:column;gap:8px}
+  .field.full{grid-column:1/-1}
+  .field label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .field input,.field textarea{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:.2s}
+  .field textarea{resize:vertical;min-height:60px}
+  .field input:focus,.field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(16,216,147,.15)}
+  .form-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:12px;margin-top:8px}
+  footer{padding:32px 0;text-align:center;font-size:12px;color:var(--muted)}
+  .toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-card);font-size:14px;z-index:100;animation:slideIn .3s}
+  .toast.success{border-color:var(--primary)}
+  .toast.error{border-color:var(--danger)}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .hidden{display:none!important}
+  @media(max-width:768px){
+    .form-grid{grid-template-columns:1fr}
+    table{font-size:13px}
+    th,td{padding:12px}
+    .header-inner{flex-direction:column;gap:12px;align-items:flex-start}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="container header-inner">
+    <div class="brand">
+      <div class="logo">✨</div>
+      <div><h1>Relay CRM</h1><p>Customer relationships, simplified</p></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm" onclick="exportCSV()">📥 CSV</button>
+      <button class="btn btn-sm" onclick="exportPDF()">🖨️ PDF</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <!-- LIST VIEW -->
+  <div id="listView">
+    <section class="stats">
+      <div class="stat accent"><div><div class="label">Total customers</div><div class="value" id="statCount">0</div></div><div class="icon">👥</div></div>
+      <div class="stat"><div><div class="label">Total payments</div><div class="value" id="statTotal">$0</div></div><div class="icon">💰</div></div>
+      <div class="stat"><div><div class="label">Avg. per customer</div><div class="value" id="statAvg">$0</div></div><div class="icon">✨</div></div>
+    </section>
+
+    <section class="toolbar" style="margin-top:24px">
+      <div class="search"><input id="searchBox" type="text" placeholder="Search by name, email, phone, address…" oninput="render()"></div>
+      <button class="btn btn-primary" onclick="openForm()">+ Add customer</button>
+    </section>
+
+    <section style="margin-top:24px" id="tableArea"></section>
+  </div>
+
+  <!-- FORM VIEW -->
+  <div id="formView" class="panel hidden">
+    <div class="form">
+      <div class="form-header">
+        <div><h2 id="formTitle">New customer</h2><p>Fill in the details to add a contact</p></div>
+        <button class="btn btn-ghost" onclick="closeForm()">← Back</button>
+      </div>
+      <form id="customerForm" class="form-grid" onsubmit="saveCustomer(event)">
+        <input type="hidden" id="f_id">
+        <div class="field"><label>Full name *</label><input id="f_name" required maxlength="100"></div>
+        <div class="field"><label>Phone</label><input id="f_phone" maxlength="30"></div>
+        <div class="field"><label>Email</label><input id="f_email" type="email" maxlength="255"></div>
+        <div class="field"><label>Total payments ($)</label><input id="f_payments" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field full"><label>Address</label><input id="f_address" maxlength="300"></div>
+        <div class="field full"><label>Orders</label><textarea id="f_orders" rows="2" maxlength="500"></textarea></div>
+        <div class="field full"><label>Notes</label><textarea id="f_notes" rows="3" maxlength="1000"></textarea></div>
+        <div class="form-actions">
+          <button type="button" class="btn" onclick="closeForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary">💾 Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer class="container">Data is stored locally in your browser.</footer>
+
+<script>
+const KEY = "crm.customers.v1";
+let customers = JSON.parse(localStorage.getItem(KEY) || "[]");
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(customers)); }
+
+function toast(msg, type="success"){
+  const t = document.createElement("div");
+  t.className = "toast " + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2500);
+}
+
+function render(){
+  const q = document.getElementById("searchBox").value.trim().toLowerCase();
+  const list = q ? customers.filter(c =>
+    [c.name,c.email,c.phone,c.address,c.orders,c.notes].join(" ").toLowerCase().includes(q)
+  ) : customers;
+
+  document.getElementById("statCount").textContent = customers.length;
+  const total = customers.reduce((s,c)=>s+Number(c.payments||0),0);
+  document.getElementById("statTotal").textContent = "$" + total.toLocaleString();
+  document.getElementById("statAvg").textContent = "$" + (customers.length ? Math.round(total/customers.length).toLocaleString() : 0);
+
+  const area = document.getElementById("tableArea");
+  if(list.length === 0){
+    area.innerHTML = `<div class="empty"><div style="font-size:40px">📭</div><h3>${customers.length===0?"No customers yet":"No matches"}</h3><p>${customers.length===0?"Click + to add your first contact.":"Try another search term."}</p></div>`;
+    return;
+  }
+  area.innerHTML = `<div class="panel"><table>
+    <thead><tr><th>Customer</th><th>Contact</th><th>Address</th><th>Orders</th><th style="text-align:right">Payments</th><th></th></tr></thead>
+    <tbody>${list.map(c=>`
+      <tr>
+        <td class="name"><span class="avatar">${escapeHtml(c.name.slice(0,2).toUpperCase())}</span>${escapeHtml(c.name)}</td>
+        <td>${c.email?`<div>📧 ${escapeHtml(c.email)}</div>`:""}${c.phone?`<div>📞 ${escapeHtml(c.phone)}</div>`:""}</td>
+        <td>${escapeHtml(c.address||"—")}</td>
+        <td>${escapeHtml(c.orders||"—")}</td>
+        <td class="amount">$${Number(c.payments||0).toLocaleString()}</td>
+        <td><div class="actions">
+          <button class="btn btn-sm btn-icon" onclick="editCustomer('${c.id}')">✏️</button>
+          <button class="btn btn-sm btn-icon btn-danger" onclick="deleteCustomer('${c.id}')">🗑️</button>
+        </div></td>
+      </tr>`).join("")}</tbody></table></div>`;
+}
+
+function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+
+function openForm(){
+  document.getElementById("formTitle").textContent = "New customer";
+  document.getElementById("customerForm").reset();
+  document.getElementById("f_id").value = "";
+  document.getElementById("f_payments").value = "0";
+  document.getElementById("listView").classList.add("hidden");
+  document.getElementById("formView").classList.remove("hidden");
+}
+
+function closeForm(){
+  document.getElementById("formView").classList.add("hidden");
+  document.getElementById("listView").classList.remove("hidden");
+}
+
+function editCustomer(id){
+  const c = customers.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById("formTitle").textContent = "Edit customer";
+  document.getElementById("f_id").value = c.id;
+  document.getElementById("f_name").value = c.name;
+  document.getElementById("f_phone").value = c.phone;
+  document.getElementById("f_email").value = c.email;
+  document.getElementById("f_address").value = c.address;
+  document.getElementById("f_orders").value = c.orders;
+  document.getElementById("f_payments").value = c.payments;
+  document.getElementById("f_notes").value = c.notes;
+  document.getElementById("listView").classList.add("hidden");
+  document.getElementById("formView").classList.remove("hidden");
+}
+
+function deleteCustomer(id){
+  if(!confirm("Delete this customer?")) return;
+  customers = customers.filter(c=>c.id!==id);
+  save(); render();
+  toast("Customer deleted");
+}
+
+function saveCustomer(e){
+  e.preventDefault();
+  const id = document.getElementById("f_id").value;
+  const data = {
+    name: document.getElementById("f_name").value.trim(),
+    phone: document.getElementById("f_phone").value.trim(),
+    email: document.getElementById("f_email").value.trim(),
+    address: document.getElementById("f_address").value.trim(),
+    orders: document.getElementById("f_orders").value.trim(),
+    payments: Number(document.getElementById("f_payments").value) || 0,
+    notes: document.getElementById("f_notes").value.trim(),
+  };
+  if(!data.name){ toast("Name is required","error"); return; }
+  if(id){
+    customers = customers.map(c => c.id===id ? {...c, ...data} : c);
+    toast("Customer updated");
+  } else {
+    customers.unshift({...data, id: crypto.randomUUID(), createdAt: Date.now()});
+    toast("Customer added");
+  }
+  save(); render(); closeForm();
+}
+
+function exportCSV(){
+  if(customers.length===0){ toast("No customers to export","error"); return; }
+  const headers = ["Name","Phone","Email","Address","Orders","Payments","Notes"];
+  const esc = v => `"${String(v??"").replace(/"/g,'""')}"`;
+  const rows = customers.map(c => [c.name,c.phone,c.email,c.address,c.orders,c.payments,c.notes].map(esc).join(","));
+  const csv = "\ufeff" + [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `customers-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function exportPDF(){
+  if(customers.length===0){ toast("No customers to export","error"); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:"landscape"});
+  doc.setFontSize(18); doc.text("Customer Directory", 14, 18);
+  doc.setFontSize(10); doc.setTextColor(120);
+  doc.text(`Generated ${new Date().toLocaleString()}`, 14, 25);
+  doc.autoTable({
+    startY: 32,
+    head: [["Name","Phone","Email","Address","Orders","Payments","Notes"]],
+    body: customers.map(c=>[c.name,c.phone,c.email,c.address,c.orders,`$${Number(c.payments||0).toLocaleString()}`,c.notes]),
+    styles:{fontSize:9,cellPadding:3},
+    headStyles:{fillColor:[16,216,147],textColor:255},
+    alternateRowStyles:{fillColor:[245,247,250]},
+  });
+  doc.save(`customers-${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+render();
+</script>
+</body>
+</html>
